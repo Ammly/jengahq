@@ -12,6 +12,7 @@ class Jengahq
     public $phone;
     public $endpoint;
     public $token;
+
     public function __construct()
     {
         $this->username = config('app.jenga_username') ?? '';
@@ -21,8 +22,9 @@ class Jengahq
         $this->endpoint = config('app.jenga_base_endpoint') ?? '';
         $this->token = $this->authenticate() ?? '';
     }
+
     /**
-     * Generate authentication token for use with all the requests to Jenga API
+     * Generate authentication token for use with all the requests to Jenga API.
      * @return [type] [description]
      */
     public function authenticate()
@@ -32,19 +34,21 @@ class Jengahq
             $request = $client->request('POST', '/identity/v2/token', [
                 'headers' => [
                 'Authorization' => $this->api_key,
-                'Content-type' => 'application/x-www-form-urlencoded'
+                'Content-type' => 'application/x-www-form-urlencoded',
                 ],
                 'form_params' => [
                     'username' => $this->username,
-                    'password' => $this->password
-                ]
+                    'password' => $this->password,
+                ],
             ]);
             $response = json_decode($request->getBody()->getContents())->access_token;
+
             return $response;
         } catch (RequestException $e) {
             return (string) $e->getResponse()->getBody();
         }
     }
+
     public function accountBalance($params)
     {
         $defaults = [
@@ -53,9 +57,9 @@ class Jengahq
             'date' => date('Y-m-d'),
         ];
         $params = array_merge($defaults, $params);
-        $plainText  = $params['country_code'].$params['account_id'];
+        $plainText = $params['country_code'].$params['account_id'];
         $privateKey = openssl_pkey_get_private('file://'.storage_path('privatekey.pem'));
-        $token      = $this->token;
+        $token = $this->token;
         openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         try {
             $client = new Client();
@@ -64,8 +68,8 @@ class Jengahq
                 'Authorization' => 'Bearer '.$token,
                 'signature' => base64_encode($signature),
                 'Content-type' => 'application/json',
-                'Accept' => '*/*'
-                ]
+                'Accept' => '*/*',
+                ],
             ]);
             $response = json_decode($request->getBody()->getContents());
             // dd($response);
@@ -74,9 +78,10 @@ class Jengahq
             return (string) $e->getResponse()->getBody();
         }
     }
+
     /**
-     * Check to determine if the request should be sent via sendMoneyPesalink() or sendMoneyInternal()
-     * @param  Array $params An array of data equired by the API to perform the request
+     * Check to determine if the request should be sent via sendMoneyPesalink() or sendMoneyInternal().
+     * @param  array $params An array of data equired by the API to perform the request
      * @return Action         Call to the appropriate action
      */
     public function sendMoney($params)
@@ -97,23 +102,24 @@ class Jengahq
             'transfer_description' => 'Some description',
         ];
         $params = array_merge($defaults, $params);
-        if ( $params['transfer_type'] != null && $params['transfer_type'] == 'InternalFundsTransfer' ) {
+        if ($params['transfer_type'] != null && $params['transfer_type'] == 'InternalFundsTransfer') {
             return $this->sendMoneyInternal($params);
         }
-        if($params['transfer_type'] != null && $params['transfer_type'] == 'PesaLink') {
+        if ($params['transfer_type'] != null && $params['transfer_type'] == 'PesaLink') {
             return $this->sendMoneyPesalink($params);
         }
     }
+
     /**
-     * Send money through Pesalink
-     * @param  Array $params An array of data equired by the API to perform the request
-     * @return Array        Status
+     * Send money through Pesalink.
+     * @param  array $params An array of data equired by the API to perform the request
+     * @return array        Status
      */
     public function sendMoneyPesalink($params)
     {
-        $plainText  = $params['transfer_amount'].$params['transfer_currencyCode'].$params['transfer_reference'].$params['destination_name'].$params['source_accountNumber'];
+        $plainText = $params['transfer_amount'].$params['transfer_currencyCode'].$params['transfer_reference'].$params['destination_name'].$params['source_accountNumber'];
         $privateKey = openssl_pkey_get_private('file://'.storage_path('privatekey.pem'));
-        $token      = $this->authenticate();
+        $token = $this->authenticate();
         openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         try {
             $client = new Client();
@@ -122,31 +128,31 @@ class Jengahq
                 'Authorization' => 'Bearer '.$token,
                 'signature' => base64_encode($signature),
                 'Content-type' => 'application/json',
-                'Accept' => '*/*'
+                'Accept' => '*/*',
                 ],
                 'json' => [
-                    "source" => [
-                      "countryCode" => $params['country_code'],
-                      "name" => $params['source_name'],
-                      "accountNumber" => $params['source_accountNumber']
+                    'source' => [
+                      'countryCode' => $params['country_code'],
+                      'name' => $params['source_name'],
+                      'accountNumber' => $params['source_accountNumber'],
                    ],
-                   "destination" => [
-                      "type" => "bank",
-                      "countryCode" => $params['country_code'],
-                      "name" => $params['destination_name'],
-                      "mobileNumber" => $params['destination_mobileNumber'],
-                      "bankCode" => $params['destination_bankCode'],
-                      "accountNumber" => $params['destination_accountNumber']
+                   'destination' => [
+                      'type' => 'bank',
+                      'countryCode' => $params['country_code'],
+                      'name' => $params['destination_name'],
+                      'mobileNumber' => $params['destination_mobileNumber'],
+                      'bankCode' => $params['destination_bankCode'],
+                      'accountNumber' => $params['destination_accountNumber'],
                    ],
-                   "transfer" => [
-                      "type" => $params['transfer_type'],
-                      "amount" => $params['transfer_amount'],
-                      "currencyCode" => $params['transfer_currencyCode'],
-                      "reference" => $params['transfer_reference'],
-                      "date" => $params['date'],
-                      "description" => $params['transfer_description']
-                   ]
-                ]
+                   'transfer' => [
+                      'type' => $params['transfer_type'],
+                      'amount' => $params['transfer_amount'],
+                      'currencyCode' => $params['transfer_currencyCode'],
+                      'reference' => $params['transfer_reference'],
+                      'date' => $params['date'],
+                      'description' => $params['transfer_description'],
+                   ],
+                ],
             ]);
             $response = json_decode($request->getBody()->getContents());
             // dd($response);
@@ -156,17 +162,18 @@ class Jengahq
             return (string) $e->getResponse()->getBody();
         }
     }
+
     /**
      * Send money within Equity bank.
-     * @param  Array $params An array of data equired by the API to perform the request
-     * @return Array         Status
+     * @param  array $params An array of data equired by the API to perform the request
+     * @return array         Status
      */
     public function sendMoneyInternal($params)
     {
-      $plainText = $params['source_accountNumber'].$params['transfer_amount'].$params['transfer_currencyCode'].$params['transfer_reference'];
-      $privateKey = openssl_pkey_get_private('file://'.storage_path('privatekey.pem'));
-      $token      = $this->authenticate();
-      openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+        $plainText = $params['source_accountNumber'].$params['transfer_amount'].$params['transfer_currencyCode'].$params['transfer_reference'];
+        $privateKey = openssl_pkey_get_private('file://'.storage_path('privatekey.pem'));
+        $token = $this->authenticate();
+        openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         try {
             $client = new Client();
             $request = $client->request('POST', 'https://uat.jengahq.io/transaction/v2/remittance', [
@@ -174,29 +181,29 @@ class Jengahq
                 'Authorization' => 'Bearer '.$token,
                 'signature' => base64_encode($signature),
                 'Content-type' => 'application/json',
-                'Accept' => '*/*'
+                'Accept' => '*/*',
                 ],
                 'json' => [
-                    "source" => [
-                      "countryCode" => $params['country_code'],
-                      "name" => $params['source_name'],
-                      "accountNumber" => $params['source_accountNumber']
+                    'source' => [
+                      'countryCode' => $params['country_code'],
+                      'name' => $params['source_name'],
+                      'accountNumber' => $params['source_accountNumber'],
                    ],
-                   "destination" => [
-                      "type" => "bank",
-                      "countryCode" => $params['country_code'],
-                      "name" => $params['destination_name'],
-                      "accountNumber" => $params['destination_accountNumber']
+                   'destination' => [
+                      'type' => 'bank',
+                      'countryCode' => $params['country_code'],
+                      'name' => $params['destination_name'],
+                      'accountNumber' => $params['destination_accountNumber'],
                    ],
-                   "transfer" => [
-                      "type" => $params['transfer_type'],
-                      "amount" => $params['transfer_amount'],
-                      "currencyCode" => $params['transfer_currencyCode'],
-                      "reference" => $params['transfer_reference'],
-                      "date" => $params['date'],
-                      "description" => $params['transfer_description']
-                   ]
-                ]
+                   'transfer' => [
+                      'type' => $params['transfer_type'],
+                      'amount' => $params['transfer_amount'],
+                      'currencyCode' => $params['transfer_currencyCode'],
+                      'reference' => $params['transfer_reference'],
+                      'date' => $params['date'],
+                      'description' => $params['transfer_description'],
+                   ],
+                ],
             ]);
             $response = json_decode($request->getBody());
             // dd($response);
@@ -206,10 +213,11 @@ class Jengahq
             return (string) $e->getResponse()->getBody();
         }
     }
+
     /**
      * Perform an IPRS search to verify provided information.
-     * @param  Array $params Array containing the details you want to verify.
-     * @return Array         Array containing verified details.
+     * @param  array $params Array containing the details you want to verify.
+     * @return array         Array containing verified details.
      */
     public function iprsSearch($params)
     {
@@ -222,9 +230,9 @@ class Jengahq
             'document_number' => '28663883',
         ];
         $params = array_merge($defaults, $params);
-        $plainText  = $params['account_id'].$params['document_number'].$params['country_code'];
+        $plainText = $params['account_id'].$params['document_number'].$params['country_code'];
         $privateKey = openssl_pkey_get_private('file://'.storage_path('privatekey.pem'));
-        $token      = $this->authenticate();
+        $token = $this->authenticate();
         openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         try {
             $client = new Client();
@@ -233,19 +241,20 @@ class Jengahq
                 'Authorization' => 'Bearer '.$token,
                 'signature' => base64_encode($signature),
                 'Content-type' => 'application/json',
-                'Accept' => '*/*'
+                'Accept' => '*/*',
                 ],
                 'json' => [
-                    "identity" => [
-                      "documentType" => $params['document_type'],
-                      "firstName" => $params['first_name'],
-                      "lastName" => $params['last_name'],
-                      "documentNumber" => $params['document_number'],
-                      "countryCode" => $params['country_code']
-                   ]
-                ]
+                    'identity' => [
+                      'documentType' => $params['document_type'],
+                      'firstName' => $params['first_name'],
+                      'lastName' => $params['last_name'],
+                      'documentNumber' => $params['document_number'],
+                      'countryCode' => $params['country_code'],
+                   ],
+                ],
             ]);
             $response = json_decode($request->getBody()->getContents());
+
             return $response;
         } catch (RequestException $e) {
             return (string) $e->getResponse()->getBody();

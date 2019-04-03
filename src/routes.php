@@ -1,12 +1,11 @@
 <?php
 
 use Ammly\Jengahq\Jengahq;
-Route::group(['prefix' => 'jengahq'],function () {
 
+Route::group(['prefix' => 'jengahq'], function () {
     Route::get('authenticate', 'Ammly\Jengahq\Jengahq@authenticate');
 
     Route::get('welcome', function () {
-
         $params = [
           'country_code' => 'KE',
           'date' => date('Y-m-d'),
