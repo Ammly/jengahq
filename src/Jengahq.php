@@ -215,11 +215,11 @@ class Jengahq
     {
         $defaults = [
             'country_code' => 'KE',
-            'account_id' => '1100161816677';
-            'document_type' => 'ID';
-            'first_name' => 'John';
-            'last_name' => 'Doe';
-            'document_number' => '28663883';
+            'account_id' => '1100161816677',
+            'document_type' => 'ID',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'document_number' => '28663883',
         ];
         $params = array_merge($defaults, $params);
         $plainText  = $params['account_id'].$params['document_number'].$params['country_code'];
