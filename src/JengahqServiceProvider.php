@@ -15,6 +15,10 @@ class JengahqServiceProvider extends ServiceProvider
     {
         $this->loadRoutesFrom(__DIR__.'/routes.php');
 
+        $this->publishes([
+            __DIR__.'/../config/jengahq.php' => config_path('jengahq.php'),
+        ]);
+
         // Publishing is only necessary when using the CLI.
         if ($this->app->runningInConsole()) {
             $this->bootForConsole();
